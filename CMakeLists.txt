@@ -4,6 +4,7 @@ project(arm-rtos C ASM)
 
 set(C_SOURCES
     ./src/main.c
+    ./src/timer.c
 )
 
 set(ASM_SOURCES
