@@ -13,7 +13,7 @@ set(ASM_SOURCES
 set(CMAKE_EXE_LINKER_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker.ld -nostartfiles")
 add_executable(${PROJECT_NAME} ${C_SOURCES} ${ASM_SOURCES})
 
-target_compile_options(${PROJECT_NAME} PRIVATE -mcpu=arm926ej-s -g)
+target_compile_options(${PROJECT_NAME} PRIVATE -mcpu=cortex-m3 -g)
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME} ${PROJECT_NAME}.bin
