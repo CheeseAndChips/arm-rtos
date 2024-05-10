@@ -8,6 +8,7 @@ set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
 
 set(C_SOURCES
     ./src/main.c
+    ./src/hal.c
 )
 
 set(ASM_SOURCES
