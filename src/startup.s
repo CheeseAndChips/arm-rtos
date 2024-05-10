@@ -1,12 +1,9 @@
-.global vector
-vector:
-    .word sram_end
-    .word _startup 
+.section .vectors
+    .word _estack   /* end of stack  */
+    .word _reset  /* reset handler */
 
-
-.global _startup
-
-.section text
-_startup:
+.global _reset 
+.section .text
+_reset:
     BL c_entry
     B .

@@ -1,2 +1,8 @@
 .cmake
 build/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.elf
+*.bin
+cmake_install.cmake

@@ -1,19 +1,32 @@
+ENTRY(_reset);
+
 MEMORY
 {
-    rom (rx): ORIGIN = 
+    flash (rx): ORIGIN = 0x08000000, LENGTH = 512k
+    sram (rwx): ORIGIN = 0x20000000, LENGTH = 128k
 }
+_estack = ORIGIN(sram) + LENGTH(sram);
 
 SECTIONS
 {
-    . = 0x08000000;
-    vector = .;
-    . = 0x20000000;
-    sram_start = .;
-    . = _startup;
-    .text : { *(.text) }
-    .data : { *(.data) }
-    .bss : { *(.bss COMMON) }
+    .vectors  : { KEEP(*(.vectors)) }       > flash
+    .text     : { . = ALIGN(4); *(.text*) }  > flash
+    .rodata   : { *(.rodata*) }             > flash
+
+    .data : {
+        _sdata = .;
+        *(.first_data)
+        *(.data SORT(.data.*))
+        _edata = .;
+    } > sram AT > flash
+    _sidata = LOADADDR(.data);
+
+    .bss : {
+        _sbss = .;
+        *(.bss SORT(.bss.*) COMMON)
+        _ebss = .;
+    } > sram
+
     . = ALIGN(8);
-    . = . + 0x2000;
-    sram_end = .;
+    _end = .;
 }
