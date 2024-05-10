@@ -22,8 +22,10 @@ SECTIONS
     _sidata = LOADADDR(.data);
 
     .bss : {
+        . = ALIGN(4);
         _sbss = .;
         *(.bss SORT(.bss.*) COMMON)
+        . = ALIGN(4);
         _ebss = .;
     } > sram
 
