@@ -9,9 +9,38 @@ _estack = ORIGIN(sram) + LENGTH(sram);
 
 SECTIONS
 {
-    .vectors  : { KEEP(*(.vectors)) }       > flash
-    .text     : { . = ALIGN(4); *(.text*) }  > flash
-    .rodata   : { *(.rodata*) }             > flash
+    .vectors(READONLY)  : { KEEP(*(.vectors)) }       > flash
+    .text(READONLY)     : { . = ALIGN(4); *(.text*) }  > flash
+    .rodata(READONLY)   : { *(.rodata*) }             > flash
+
+    .preinit_array(READONLY)     :
+    {
+      . = ALIGN(4);
+      __preinit_array_start = .;
+      *(.preinit_array*)
+      __preinit_array_end = .;
+      . = ALIGN(4);
+    } > flash
+
+    .init_array(READONLY) :
+    {
+      . = ALIGN(4);
+      __init_array_start = .;
+      *(.init_array.*)
+      *(.init_array*)
+      __init_array_end = .;
+      . = ALIGN(4);
+    } > flash
+
+    .fini_array(READONLY) :
+    {
+      . = ALIGN(4);
+      __fini_array_start = .;
+      *(.fini_array.*)
+      *(.fini_array*)
+      __fini_array_end = .;
+      . = ALIGN(4);
+    } > flash
 
     .data : {
         _sdata = .;

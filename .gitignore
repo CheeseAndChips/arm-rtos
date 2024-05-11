@@ -6,3 +6,4 @@ Makefile
 *.elf
 *.bin
 cmake_install.cmake
+*.map
