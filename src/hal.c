@@ -13,6 +13,10 @@
 #define APB2_FREQUENCY (SYS_FREQUENCY / (BIT(APB2_PRE - 3)))
 #define APB1_FREQUENCY (SYS_FREQUENCY / (BIT(APB1_PRE - 3)))
 
+#define UART_TX 8 // on PORTD
+#define UART_RX 9 // on PORTD
+#define BAUDRATE 115200
+
 #if SYS_FREQUENCY > 180000000
 #error "Clock frequency too high"
 #endif
@@ -37,8 +41,14 @@ static struct {
     volatile uint32_t ACR, KEYR, OPTKEYR, SR, CR, OPTCR;
 } *FLASH = (void *)(0x40023C00);
 
+static struct {
+    volatile uint32_t SR, DR, BRR, CR1, CR2, CR3, GTPR;
+} *USART3 = (void *)(0x40004800);
+
 void enable_rccs (void) {
-    RCC->AHB1ENR |= 2; // Enable GPIOB RCC
+    RCC->AHB1ENR |= BIT(1);  // Enable GPIOB RCC
+    RCC->APB1ENR |= BIT(18); // Enable USART3 RCC
+    RCC->AHB1ENR |= BIT(3);  // Enable GPIOD RCC
 }
 
 void set_gpio_mode (gpio_t *periph, uint32_t pin, uint32_t state) {
@@ -52,15 +62,42 @@ void set_gpio_output (gpio_t *periph, uint32_t pin, bool state) {
     periph->ODR |= state_bit << pin;
 }
 
+static void set_gpio_alternate_function (gpio_t *periph, uint32_t pin, uint32_t function) {
+    if (pin < 8) {
+        periph->AFRL &= ~(0xF << (pin * 4));
+        periph->AFRL |= function << (pin * 4);
+    } else {
+        periph->AFRH &= ~(0xF << ((pin - 8) * 4));
+        periph->AFRH |= function << ((pin - 8) * 4);
+    }
+}
+
+void uart_init (void) {
+    set_gpio_mode(GPIOD, UART_TX, 0b10); // alternate function
+    set_gpio_mode(GPIOD, UART_RX, 0b10); // alternate function
+    set_gpio_alternate_function(GPIOD, UART_TX, 7); // USART3 TX AF
+    set_gpio_alternate_function(GPIOD, UART_RX, 7); // USART3 RX AF
+    USART3->CR1 = 0;
+    USART3->BRR = APB1_FREQUENCY / BAUDRATE;
+    USART3->CR1 = BIT(3) | BIT(2) | BIT(13); // TE, RE, UE
+}
+
+void uart_send (const char *str) {
+    while (*str) {
+        while ((USART3->SR & BIT(7)) == 0);
+        USART3->DR = *str++;
+    }
+}
+
 void clock_init (void) {
-    FLASH->ACR |= FLASH_LATENCY | BIT(8) | BIT(9);     // Flash latency + prefetch + instruction cache
-    RCC->PLLCFGR &= ~((BIT(17) - 1));                  // Clear PLL multipliers
-    RCC->PLLCFGR |= (((PLL_P - 2) / 2) & 3) << 16;     // Set PLL_P
-    RCC->PLLCFGR |= PLL_M | (PLL_N << 6);              // Set PLL_M and PLL_N
-    RCC->CR |= BIT(24);                                // Enable PLL
+    FLASH->ACR |= FLASH_LATENCY | BIT(8) | BIT(9);      // Flash latency + prefetch + instruction cache
+    RCC->PLLCFGR &= ~((BIT(17) - 1));                   // Clear PLL multipliers
+    RCC->PLLCFGR |= (((PLL_P - 2) / 2) & 3) << 16;      // Set PLL_P
+    RCC->PLLCFGR |= PLL_M | (PLL_N << 6);               // Set PLL_M and PLL_N
+    RCC->CR |= BIT(24);                                 // Enable PLL
     while ((RCC->CR & BIT(25)) == 0);
-    RCC->CFGR = (APB1_PRE << 10) | (APB2_PRE << 13); // Set prescalers
-    RCC->CFGR |= 2;                                  // Set clock source to PLL
+    RCC->CFGR = (APB1_PRE << 10) | (APB2_PRE << 13);    // Set prescalers
+    RCC->CFGR |= 2;                                     // Set clock source to PLL
     while ((RCC->CFGR & 12) == 0);
 
     // RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;   // Enable SYSCFG
