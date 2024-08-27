@@ -12,6 +12,7 @@ typedef struct {
 #define GPIOD ((gpio_t *)(GPIO_BASE + 0x400 * 3))
 
 void enable_rccs (void);
+void set_pendsv (void);
 void set_gpio_mode (gpio_t *periph, uint32_t pin, uint32_t state);
 void set_gpio_output (gpio_t *periph, uint32_t pin, bool state);
 void clock_init (void);

@@ -45,6 +45,15 @@ static struct {
     volatile uint32_t SR, DR, BRR, CR1, CR2, CR3, GTPR;
 } *USART3 = (void *)(0x40004800);
 
+struct {
+    uint32_t CPUID, ICSR;
+    // ...
+} *SCB = (void*)(0xE000ED00);
+
+void set_pendsv (void) {
+    SCB->ICSR |= BIT(28);
+}
+
 void enable_rccs (void) {
     RCC->AHB1ENR |= BIT(1);  // Enable GPIOB RCC
     RCC->APB1ENR |= BIT(18); // Enable USART3 RCC

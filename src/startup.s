@@ -14,7 +14,7 @@ _vectors:
     .word _empty_handler        /* system service call via SWI */
     .word _empty_handler        /* Debug monitor */
     .word 0                     /* reserved */
-    .word _empty_handler        /* pendable request for system service */
+    .word _pendsv_handler       /* pendable request for system service */
     .word _empty_handler        /* system tick timer */
 
 .global _reset 
@@ -51,16 +51,28 @@ zero_loop:
     CMP r0, r1
     BNE zero_loop
 end_zero_loop:
-
     /* BL __libc_init_array */
     /* jump to main */
     BL c_entry
     B .
 
+.type _pendsv_handler, %function
+_pendsv_handler:
+    PUSH {r0}
+    LDR r0, =other_stack_end
+    LDR r0, [r0]
+    MSR psp, r0
+    LDR r0, =_other_function
+    MOV lr, r0
+    POP {r0}
+    BX lr
+
 .global _default_err_handler
 .type _default_err_handler, %function
 _default_err_handler:
     B .
+
+.type _empty_handler, %function
 _empty_handler:
     /* return instantly */
-    BX LR
+    BX lr
